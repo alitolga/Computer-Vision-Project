@@ -17,6 +17,7 @@ def between(cap, lower: int, upper: int) -> bool:
 
 def switchToGrayscale(_frame):
     frame = cv2.cvtColor(_frame, cv2.COLOR_BGR2GRAY)
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     return frame
 
 
@@ -31,7 +32,7 @@ def bilateralFilter(_frame, _diameter=9, _sigmaColor=75, _sigmaSpace=75):
     diameter = _diameter
     sigmaColor = _sigmaColor
     sigmaSpace = _sigmaSpace
-    frame = cv2.bilateralFilter(frame, diameter, sigmaColor, sigmaSpace)
+    frame = cv2.bilateralFilter(_frame, diameter, sigmaColor, sigmaSpace)
     return frame
 
 
@@ -68,11 +69,47 @@ def showRGBandHSVmasks(frame, cap):
     cv2.imshow('RGB mask', mask_rgb)
     cv2.imshow('HSV mask', mask_hsv)
     if between(cap, 12000, 16000):
-        return mask_rgb
-    return mask_hsv
+        frame = mask_rgb
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+        return frame
+    frame = mask_hsv
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    return frame
 
 
-def EdgeDetectorSobel(frame, cap):
+def EdgeDetectorSobel(frame, cap, _delta=0, _scale=1):
+    # Convert the image to grayscale
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # delta = 100
+    delta = _delta
+    scale = _scale
+    # sobel_kernel_size = 3
+
+    # Apply the Sobel edge detector with the updated parameters
+    sobelx = cv2.Sobel(gray_frame, cv2.CV_64F, 1, 0, scale=scale, delta=delta, ksize=-1)
+    sobely = cv2.Sobel(gray_frame, cv2.CV_64F, 0, 1, scale=scale, delta=delta, ksize=-1)
+
+    edges = cv2.magnitude(sobelx, sobely)
+    edges = cv2.normalize(edges, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+    # Visualize the edges with color
+    colored_edges = cv2.merge([np.zeros_like(edges), edges, edges])
+    cv2.imshow('Colored Edges', colored_edges)
+    cv2.imshow('Edges', edges)
+    if between(cap, 20000, 22000):
+        frame = colored_edges
+        return frame
+    frame = edges
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    return frame
+
+
+def PrintHoughCircles(frame, cap, _min_radius=10, _max_radius=50, _min_distance=20, _param1=50, _param2=60):
+
+    #################   Edge Detection   #####################################
+    # edges = EdgeDetectorSobel(frame, cap)
+
     # Convert the image to grayscale
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -85,32 +122,16 @@ def EdgeDetectorSobel(frame, cap):
     sobelx = cv2.Sobel(gray_frame, cv2.CV_64F, 1, 0, scale=scale, delta=delta, ksize=-1)
     sobely = cv2.Sobel(gray_frame, cv2.CV_64F, 0, 1, scale=scale, delta=delta, ksize=-1)
 
-    edges_horizontal = cv2.convertScaleAbs(sobelx)
-    edges_vertical = cv2.convertScaleAbs(sobely)
-    # edges = cv2.addWeighted(edges_horizontal, 0.5, edges_vertical, 0.5, 0)
     edges = cv2.magnitude(sobelx, sobely)
     edges = cv2.normalize(edges, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-
-    # Visualize the edges with color
-    colored_edges = cv2.merge([np.zeros_like(edges), edges, edges])
-    cv2.imshow('Colored Edges', colored_edges)
-    cv2.imshow('Edges', edges)
-    if between(cap, 20000, 22000):
-        return colored_edges
-    return edges
-
-
-def PrintHoughCircles(frame, cap, _min_radius=10, _max_radius=50, _min_distance=20, _param1=50, _param2=60):
-    edges = EdgeDetectorSobel(frame, cap)
 
     # Hough transform for circles parameters
     min_radius = _min_radius
     max_radius = _max_radius
     min_distance = _min_distance
-    # param1 = 70
-    # param2 = 50
     param1 = _param1
     param2 = _param2
+    #######################################################################
 
     # Apply Hough transform for circle detection
     circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, dp=1, minDist=min_distance,
@@ -152,11 +173,14 @@ def TemplateMatching(frame):
     cv2.rectangle(frame, match_loc, (match_loc[0] + object_h, match_loc[1] + object_w),
                   (certainty_color, certainty_color, certainty_color), -1)
 
+    # frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
     return frame
 
 
 def ReplaceBallWithImage(frame):
-    replacement_image = cv2.imread('binali.png')
+    # replacement_image = cv2.imread('binali.png')
+    replacement_image = cv2.imread('primeminister.jpg')
 
     # Convert the frame to the HSV color space
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -182,6 +206,7 @@ def ChangeColorOfBall(frame, x, y, r):
     alpha = cv2.merge((ball_mask, ball_mask, ball_mask, ball_mask))
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
     frame[np.where((alpha == [255, 255, 255, 255]).all(axis=2))] = [0, 0, 255, 0]
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
     return frame
 
 def CopyBallObject(frame, x, y, r):
@@ -198,6 +223,44 @@ def CopyBallObject(frame, x, y, r):
     return frame
 
 
+def CarteBlanche(frame, cap):
+    # Convert the image to grayscale
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    delta = 0
+    scale = 1
+
+    # Apply the Sobel edge detector with the updated parameters
+    sobelx = cv2.Sobel(gray_frame, cv2.CV_64F, 1, 0, scale=scale, delta=delta, ksize=-1)
+    sobely = cv2.Sobel(gray_frame, cv2.CV_64F, 0, 1, scale=scale, delta=delta, ksize=-1)
+
+    edges = cv2.magnitude(sobelx, sobely)
+    edges = cv2.normalize(edges, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+    circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, dp=1, minDist=20,
+                               param1=50, param2=60,
+                               minRadius=10, maxRadius=50)
+
+    if circles is None:
+        return frame
+
+    circles = np.round(circles[0, :]).astype('int')
+
+    # Loop through all the detected circles
+    for (x, y, r) in circles:
+        if between(cap, 40000, 47000):
+            frame = ReplaceBallWithImage(frame)
+            print("Replace ball with image")
+
+        if between(cap, 47000, 54000):
+            frame = ChangeColorOfBall(frame, x, y, r)
+            print("Change the color of ball")
+
+        if between(cap, 54000, 60000):
+            frame = CopyBallObject(frame, x, y, r)
+            print("Make 2 copies of the ball")
+    return frame
+
 def main(input_video_file: str, output_video_file: str) -> None:
     # OpenCV video objects to work with
     cap = cv2.VideoCapture(input_video_file)
@@ -205,6 +268,11 @@ def main(input_video_file: str, output_video_file: str) -> None:
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # saving output video as .mp4
+
+    # print(fps)
+    # fps = fps/2
+    # print(fps)
+
     out = cv2.VideoWriter(output_video_file, fourcc, fps, (frame_width, frame_height))
 
     # while loop where the real work happens
@@ -217,9 +285,9 @@ def main(input_video_file: str, output_video_file: str) -> None:
             frame = cv2.flip(frame, 0)
             frame = cv2.flip(frame, 1)
 
-            if between(cap, 0, 1500):
+            if between(cap, 500, 1000):
                 frame = switchToGrayscale(frame)
-            if between(cap, 1700, 2000):
+            if between(cap, 1500, 2000):
                 frame = switchToGrayscale(frame)
             if between(cap, 2500, 3000):
                 frame = switchToGrayscale(frame)
@@ -229,48 +297,51 @@ def main(input_video_file: str, output_video_file: str) -> None:
             if between(cap, 4000, 5000):
                 print("Gaussian filter 1")
                 frame = gaussianFilter(frame, (5, 5), 0)
-                # frame = cv2.bilateralFilter(frame, 9, 75, 75)
 
             if between(cap, 5000, 6000):
                 print("Gaussian filter 2")
-                frame = cv2.GaussianBlur(frame, (5, 5), 1)
-                # frame = cv2.bilateralFilter(frame, 9, 10, 50)
+                frame = gaussianFilter(frame, (5, 5), 0.9)
 
             if between(cap, 6000, 7000):
                 print("Gaussian filter 3")
-                frame = gaussianFilter(frame, (3, 3), 0)
-                # frame = cv2.bilateralFilter(frame, 9, 75, 75)
+                frame = gaussianFilter(frame, (7, 7), 0)
 
             if between(cap, 7000, 8000):
                 print("Gaussian filter 4")
-                frame = cv2.GaussianBlur(frame, (3, 3), 2)
-                # frame = cv2.bilateralFilter(frame, 9, 10, 50)
+                frame = gaussianFilter(frame, (7, 7), 3)
 
             if between(cap, 8000, 9000):
                 print("Bilateral filter 1")
-                frame = cv2.bilateralFilter(frame, 7, 250, 50)
+                frame = bilateralFilter(frame, 7, 10, 10)
                 # frame = cv2.GaussianBlur(frame, (5, 5), 2)
 
             if between(cap, 9000, 10000):
                 print("Bilateral filter 2")
-                frame = cv2.bilateralFilter(frame, 7, 10, 250)
-                # frame = cv2.GaussianBlur(frame, (5, 5), 3)
+                frame = bilateralFilter(frame, 7, 250, 250)
 
             if between(cap, 10000, 11000):
                 print("Bilateral filter 3")
-                frame = cv2.bilateralFilter(frame, 9, 50, 50)
-                # frame = cv2.GaussianBlur(frame, (5, 5), 2)
+                frame = bilateralFilter(frame, 9, 50, 50)
 
             if between(cap, 11000, 12000):
                 print("Bilateral filter 4")
-                frame = cv2.bilateralFilter(frame, 9, 250, 250)
-                # frame = cv2.GaussianBlur(frame, (5, 5), 3)
+                frame = bilateralFilter(frame, 9, 250, 250)
 
             if between(cap, 12000, 20000):
                 frame = showRGBandHSVmasks(frame, cap)
 
-            if between(cap, 20000, 24900):
-                frame = EdgeDetectorSobel(frame, cap)
+            if between(cap, 20000, 2100):
+                frame = EdgeDetectorSobel(frame, cap, 0, 1)
+                print("Colored, scale=1")
+            if between(cap, 21000, 22000):
+                frame = EdgeDetectorSobel(frame, cap, 0, 100)
+                print("Colored, scale=100")
+            if between(cap, 20000, 23500):
+                frame = EdgeDetectorSobel(frame, cap, 0)
+                print("Grayscale, delta=0")
+            if between(cap, 23500, 25000):
+                frame = EdgeDetectorSobel(frame, cap, 100)
+                print("Grayscale, delta=1000")
 
             if between(cap, 25000, 27000):
                 frame = PrintHoughCircles(frame=frame, cap=cap, _min_radius=90)
@@ -293,30 +364,7 @@ def main(input_video_file: str, output_video_file: str) -> None:
                 print("Template Matching")
 
             if between(cap, 40000, 60000):
-                edges = EdgeDetectorSobel(frame, cap)
-
-                circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, dp=1, minDist=20,
-                                           param1=50, param2=60,
-                                           minRadius=10, maxRadius=50)
-
-                if circles is None:
-                    continue
-
-                circles = np.round(circles[0, :]).astype('int')
-
-                # Loop through all the detected circles
-                for (x, y, r) in circles:
-                    if between(cap, 40000, 47000):
-                        frame = ChangeColorOfBall(frame, x, y, r)
-                        print("Change the color of ball")
-
-                    if between(cap, 47000, 54000):
-                        frame = ReplaceBallWithImage(frame)
-                        print("Replace ball with image")
-
-                    if between(cap, 54000, 59900):
-                        frame = CopyBallObject(frame, x, y, r)
-                        print("Make 2 copies of the ball")
+                frame = CarteBlanche(frame, cap)
 
             """ write frame that you processed to output"""
             out.write(frame)

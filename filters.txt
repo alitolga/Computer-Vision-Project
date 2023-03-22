@@ -1,0 +1,20 @@
+cv.GaussianBlur
+
+The cv.GaussianBlur function applies a Gaussian blur to an image. A Gaussian blur is a linear filter that smoothes an image by convolving it with a Gaussian kernel. Here are the most important parameters:
+
+    src: The input image to be blurred.
+    ksize: The size of the kernel used for blurring. This parameter should be an odd integer, and a larger value will result in a stronger blur.
+    sigmaX: The standard deviation of the Gaussian kernel in the x direction. This parameter controls the amount of smoothing in the x direction, and a larger value will result in a stronger blur.
+    sigmaY: The standard deviation of the Gaussian kernel in the y direction. This parameter controls the amount of smoothing in the y direction, and a larger value will result in a stronger blur.
+
+By adjusting the ksize, sigmaX, and sigmaY parameters, you can control the degree of smoothing and the size of the details that are preserved or removed.
+cv.bilateralFilter
+
+The cv.bilateralFilter function is a non-linear filter that is used to smooth an image while preserving edges. It is a slower algorithm compared to Gaussian blur, but it provides better edge preservation. Here are the most important parameters:
+
+    src: The input image to be smoothed.
+    d: The diameter of each pixel neighborhood used during filtering. A larger value will result in a stronger blur.
+    sigmaColor: The standard deviation of the color space used during filtering. This parameter controls the degree to which pixels with similar colors are considered to be part of the same region.
+    sigmaSpace: The standard deviation of the coordinate space used during filtering. This parameter controls the degree to which pixels with nearby coordinates are considered to be part of the same region.
+
+By adjusting the d, sigmaColor, and sigmaSpace parameters, you can control the degree of smoothing and the degree of edge preservation. A higher value of sigmaColor will result in more colors being treated as the same, and a higher value of sigmaSpace will result in more pixels being treated as the same.

@@ -1,0 +1,39 @@
+﻿1
+00:00:00,000 --> 00:00:04,000
+For the first 4 seconds, we flick between grayscale and colored frames.
+
+2
+00:00:04,000 --> 00:00:08,000
+2 seconds of Gaussian with ksize=5 and 2 seconds with ksize=7
+
+3
+00:00:08,000 --> 00:00:12,000
+2 seconds of bilateral with ksize=7 and 2 seconds with ksize=9
+Each second we also switch between high and low sigmaColor and sigmaSpace
+
+4
+00:00:12,000 --> 00:00:20,000
+4 seconds of RGB masking and 4 seconds of HSV masking. The HSV visibly works better.
+Plus, at the last 2 seconds of each, we apply closed morphing which slightly increases performance.
+
+5
+00:00:20,000 --> 00:00:25,000
+Sobel Edge detection with color and grayscale.
+After 1 second, we increase the scale at the colored one and the delta in the grayscale one.
+
+6
+00:00:25,000 --> 00:00:35,000
+Hough circle detection. Every 2 seconds, we tweak with parameters.
+We do too high min radius, too low max radius, high param1, high param2
+and the ideal parameters.
+
+7
+00:00:35,000 --> 00:00:40,000
+We apply template matching.
+The whiteness of the rectangle changes with the likelihood.
+
+8
+00:00:40,000 --> 00:00:59,900
+Carte blanche. We replace the ball with the image of the president,
+we change the color of the ball and we make copies of it.
+
